@@ -51,7 +51,7 @@ Access the app at: [http://localhost:20000/web_app/index/](http://localhost:2000
 Open a new terminal window and run:
 
 ```bash
-docker-compose exec web python manage.py migrate
+docker-compose exec educationalreels-server python manage.py migrate
 ```
 
 ---
