@@ -1,0 +1,73 @@
+{% extends 'web_app/base.html' %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2>Your Profile</h2>
+    <p><strong>Username:</strong> {{ user.username }}</p>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Role:</strong> {{ user.role }}</p>
+
+    <hr>
+
+    <!-- Button to trigger modal -->
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">
+        Change Password
+    </button>
+
+    <!-- Password Change Modal -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Reset Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="changePasswordForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_old_password" class="form-label">Old Password</label>
+                            <input type="password" class="form-control" id="id_old_password" name="old_password" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_new_password1" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="id_new_password1" name="new_password1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_new_password2" class="form-label">Confirm Password</label>
+                            <input type="password" class="form-control" id="id_new_password2" name="new_password2" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        $("#changePasswordForm").submit(function (e) {
+            e.preventDefault(); // Prevent default form submission
+
+            // Debug: Check if function runs
+            console.log("Submitting password change request...");
+
+            let formData = $(this).serialize();
+            
+            sendAjaxRequest("{% url 'change_password' %}", formData, function (response) {
+                console.log("Response received:", response);
+
+                showToast(response.message, "success");
+                $('#changePasswordModal').modal('hide');  // Close modal
+                $("#changePasswordForm")[0].reset();  // Reset form fields
+            });
+        });
+    });
+</script>
+{% endblock %}

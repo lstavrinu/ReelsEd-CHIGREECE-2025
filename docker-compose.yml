@@ -1,0 +1,38 @@
+version: '3'
+
+volumes:
+  educationalreels-db-data:
+
+networks:
+  web:
+    external: true
+
+services:
+  educationalreels-postgres:
+    container_name: educationalreels-postgres
+    image: postgres
+    restart: always
+    volumes:
+      - educationalreels-db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: "trust"
+      POSTGRES_USER: postgres
+      PGDATA: /var/lib/postgresql/data
+    ports:
+     - "5432:5432"
+    networks:
+      - web
+  educationalreels-server:
+    container_name: educationalreels-server
+    build: .
+    command: bash -c "python3 manage.py makemigrations web_app && python3 manage.py migrate && python3 manage.py collectstatic --no-input && python3 manage.py runserver 0.0.0.0:20000"
+    volumes:
+      - .:/code
+    ports:
+        - "20000:20000"
+    depends_on:
+      - educationalreels-postgres
+    stdin_open: true
+    tty: true
+    networks:
+      - web

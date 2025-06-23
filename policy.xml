@@ -1,0 +1,5 @@
+<policymap>
+  <policy domain="resource" name="temporary-path" value="/tmp"/>
+  <policy domain="system" name="max-memory-request" value="256MiB"/>
+  <policy domain="path" rights="read|write" pattern="@*"/>
+</policymap>

@@ -1,0 +1,14 @@
+{% extends "web_app/base.html" %}
+
+{% block content %}
+<div class="content-container">
+    <h1>Welcome to Educational Reels Generator</h1>
+    {% if user.is_authenticated %}
+        <p>Welcome back, {{ user.first_name }} {{ user.last_name }}!</p>
+        <p>Your role: {{ user.role }}</p>
+        <a href="/web_app/logout/">Logout</a>
+    {% else %}
+        <p>You are not logged in. Please <a href="/web_app/login/">login</a> or <a href="/web_app/register/">register</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+Django==4.0.4
+django-cors-headers
+django-extensions
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+django-session-timeout
+drf-yasg==1.21.7
+gevent==24.2.1
+gunicorn==21.0.1
+psycopg2==2.9.9
+numpy  # Needed by moviepy
+imageio[ffmpeg]  # Needed by moviepy for video processing
+moviepy==1.0.3
+openai
+opencv-python-headless
+youtube-transcript-api
+yt-dlp
+ffmpeg-python
+ffmpeg
+pillow

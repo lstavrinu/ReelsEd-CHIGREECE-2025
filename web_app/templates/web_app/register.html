@@ -1,0 +1,118 @@
+{% extends "web_app/base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h2 class="text-center mb-4">Create an Account</h2>
+        <form method="post" id="registerForm" novalidate>
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div class="mb-3">
+                <label for="id_username" class="form-label">
+                    Username <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="username" id="id_username" class="form-control" required>
+                <div class="invalid-feedback">Username is required.</div>
+            </div>
+
+            <!-- First Name -->
+            <div class="mb-3">
+                <label for="id_first_name" class="form-label">
+                    First Name <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="first_name" id="id_first_name" class="form-control" required>
+                <div class="invalid-feedback">First name is required.</div>
+            </div>
+
+            <!-- Last Name -->
+            <div class="mb-3">
+                <label for="id_last_name" class="form-label">
+                    Last Name <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="last_name" id="id_last_name" class="form-control" required>
+                <div class="invalid-feedback">Last name is required.</div>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label for="id_email" class="form-label">
+                    Email <span class="text-danger">*</span>
+                </label>
+                <input type="email" name="email" id="id_email" class="form-control" required>
+                <div class="invalid-feedback">Enter a valid email address.</div>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+                <label for="id_password1" class="form-label">
+                    Password <span class="text-danger">*</span>
+                </label>
+                <input type="password" name="password1" id="id_password1" class="form-control" required>
+                <small class="form-text text-muted">Must be at least 8 characters.</small>
+                <div class="invalid-feedback">Password is required.</div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-3">
+                <label for="id_password2" class="form-label">
+                    Confirm Password <span class="text-danger">*</span>
+                </label>
+                <input type="password" name="password2" id="id_password2" class="form-control" required>
+                <div class="invalid-feedback">Passwords do not match.</div>
+            </div>
+
+            <!-- Role Selection -->
+            <div class="mb-3">
+                <label for="id_role" class="form-label">
+                    Role <span class="text-danger">*</span>
+                </label>
+                <select name="role" id="id_role" class="form-control" required>
+                    <option value="">Select Role</option>
+                    <option value="Student">Student</option>
+                    <option value="Instructor">Instructor</option>
+                </select>
+                <div class="invalid-feedback">Please select a role.</div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+
+        <p class="text-center mt-3">
+            Already have an account? <a href="{% url 'login' %}" class="text-decoration-none">Login here</a>
+        </p>
+    </div>
+</div>
+
+<!-- JavaScript Validation & Toastr Messages -->
+<script>
+    document.getElementById("registerForm").addEventListener("submit", function(event) {
+        let form = event.target;
+        let valid = true;
+        let password1 = document.getElementById("id_password1").value;
+        let password2 = document.getElementById("id_password2").value;
+
+        // Check required fields
+        form.querySelectorAll("input, select").forEach(input => {
+            if (!input.value.trim()) {
+                input.classList.add("is-invalid");
+                valid = false;
+            } else {
+                input.classList.remove("is-invalid");
+            }
+        });
+
+        // Password match validation
+        if (password1 !== password2) {
+            document.getElementById("id_password2").classList.add("is-invalid");
+            valid = false;
+            toastr.error("Passwords do not match.");
+        }
+
+        if (!valid) {
+            event.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,227 @@
+{% extends "web_app/base.html" %}
+
+{% block content %}
+<div class="container-fluid px-3 py-3 dashboard-container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+        <h1>Student Dashboard</h1>
+    </div>
+
+    <!-- Search Videos -->
+    <div class="search-container text-center mb-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+            <input type="text" id="searchInput" class="form-control" placeholder="🔍 Search for videos or reels...">
+            <button class="btn btn-primary" onclick="searchVideosReels()">Search</button>
+        </div>
+    </div>
+
+    <!-- Results Display -->
+    <div id="searchResults" class="mt-4"></div>
+
+    <h2>Your Videos</h2>
+
+    {% if videos %}
+        {% for video in videos %}
+            <div class="video-container mb-4">
+                <h3>{{ video.title }}</h3>
+                <div class="ratio ratio-16x9">
+                    <iframe src="https://www.youtube.com/embed/{{ video.video_id }}" allowfullscreen></iframe>
+                </div>
+
+                <div class="d-flex justify-content-center align-items-center flex-column flex-sm-row gap-2 mt-3">
+                    <button class="btn btn-success" onclick="openViewReelsModal('{{ video.video_id }}')">View Reels</button>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-muted text-center mt-4">📭 You currently have no videos assigned to you. Please contact your instructor.</p>
+    {% endif %}
+</div>
+
+<!-- Reels Modal -->
+<div class="modal fade" id="reelsModal" tabindex="-1" aria-labelledby="reelsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+                <h5 class="modal-title" id="reelsModalLabel">🎥 Focus Mode: Scrollable Reels</h5>
+                <button type="button" class="btn-close" onclick="closeReelsModal()"></button>
+            </div>
+            <div class="modal-body">
+                <div id="reelsContainer" class="text-center">
+                    <!-- Reels dynamically inserted here -->
+                </div>
+                <p id="reelCounter" class="text-center mt-2"></p>
+                <div class="d-flex justify-content-between flex-wrap gap-2 mt-3">
+                    <button class="btn btn-secondary" id="prevReelBtn" onclick="prevReel()">⬅️ Previous</button>
+                    <button class="btn btn-primary" id="nextReelBtn" onclick="nextReel()">Next ➡️</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    let currentReelIndex = 0;
+    let totalReels = 0;
+
+    function openViewReelsModal(videoId) {
+        fetch(`/web_app/get_reels/${videoId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.reels.length > 0) {
+                    populateReelsModal(data.reels);
+                    $('#reelsModal').modal('show');
+                } else {
+                    showToast("No reels available for this video.", "error");
+                }
+            })
+            .catch(error => console.error("Error fetching reels:", error));
+    }
+
+    function populateReelsModal(reels) {
+        let container = document.getElementById("reelsContainer");
+        container.innerHTML = "";
+        totalReels = reels.length;
+        currentReelIndex = 0;
+
+        reels.forEach((reel, index) => {
+            let displayStyle = index === 0 ? "block" : "none";
+            container.innerHTML += `
+                <div class="reel-item text-center" id="reel-${index}" style="display: ${displayStyle};">
+                    <h3 class="reel-title">${reel.label}</h3>
+                    <video width="100%" height="auto" controls>
+                        <source src="${reel.file_path}" type="video/mp4">
+                    </video>
+                    <p class="average-rating" id="rating-${reel.id}">
+                        ⭐ ${reel.average_rating.toFixed(1)} / 5 (${reel.total_votes} ratings)
+                    </p>
+                    <div class="star-rating" data-reel-id="${reel.id}">
+                        ${generateStarRating(reel.id, reel.user_rating)}
+                    </div>
+                </div>
+            `;
+        });
+
+        updateNavigationButtons();
+    }
+
+    function nextReel() {
+        if (currentReelIndex < totalReels - 1) {
+            document.getElementById(`reel-${currentReelIndex}`).style.display = "none";
+            currentReelIndex++;
+            document.getElementById(`reel-${currentReelIndex}`).style.display = "block";
+        }
+        updateNavigationButtons();
+    }
+
+    function prevReel() {
+        if (currentReelIndex > 0) {
+            document.getElementById(`reel-${currentReelIndex}`).style.display = "none";
+            currentReelIndex--;
+            document.getElementById(`reel-${currentReelIndex}`).style.display = "block";
+        }
+        updateNavigationButtons();
+    }
+
+    function updateNavigationButtons() {
+        document.getElementById("prevReelBtn").disabled = currentReelIndex === 0;
+        document.getElementById("nextReelBtn").disabled = currentReelIndex === totalReels - 1;
+        document.getElementById("reelCounter").textContent = `Reel ${currentReelIndex + 1} of ${totalReels}`;
+    }
+
+    function closeReelsModal() {
+        $('#reelsModal').modal('hide');
+    }
+
+    function generateStarRating(reelId, userRating = 0) {
+        let stars = "";
+        for (let i = 1; i <= 5; i++) {
+            let activeClass = i <= userRating ? "active-star" : "";
+            stars += `<span class="star ${activeClass}" data-reel-id="${reelId}" data-value="${i}" onclick="rateReel(${reelId}, ${i})">★</span>`;
+        }
+
+        return `
+            <div class="rating-container">
+                <div class="star-rating" data-reel-id="${reelId}">${stars}</div>
+                <button class="btn btn-outline-danger remove-rating" id="remove-rating-${reelId}" onclick="removeRating(${reelId})" style="display: ${userRating > 0 ? 'block' : 'none'};">
+                    ❌ Remove
+                </button>
+            </div>
+        `;
+    }
+
+    function rateReel(reelId, rating) {
+        fetch(`/web_app/rate_reel/${reelId}/${rating}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken()
+            },
+            body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast("Thanks for your rating!", "success");
+                document.getElementById(`rating-${reelId}`).innerHTML = `⭐ ${data.new_average_rating.toFixed(1)} / 5 (${data.total_votes} ratings)`;
+                let ratingContainer = document.querySelector(`.star-rating[data-reel-id="${reelId}"]`);
+                if (ratingContainer) {
+                    ratingContainer.innerHTML = generateStarRating(reelId, rating);
+                }
+                document.getElementById(`remove-rating-${reelId}`).style.display = "block";
+            }
+        });
+    }
+
+    function removeRating(reelId) {
+        fetch(`/web_app/remove_reel_rating/${reelId}/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCSRFToken()
+            },
+            body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showToast("Rating removed!", "info");
+                document.getElementById(`rating-${reelId}`).innerHTML = `⭐ ${data.new_average_rating.toFixed(1)} / 5 (${data.total_votes} ratings)`;
+                let ratingContainer = document.querySelector(`.star-rating[data-reel-id="${reelId}"]`);
+                if (ratingContainer) {
+                    ratingContainer.innerHTML = generateStarRating(reelId, 0);
+                }
+                document.getElementById(`remove-rating-${reelId}`).style.display = "none";
+            }
+        });
+    }
+
+    function getCSRFToken() {
+        return document.querySelector("[name=csrfmiddlewaretoken]").value;
+    }
+
+    function showToast(message, type) {
+        toastr[type](message);
+    }
+
+    function searchVideosReels() {
+        let query = document.getElementById("searchInput").value.trim();
+        if (!query) {
+            showToast("Please enter a search term.", "error");
+            return;
+        }
+
+        fetch(`/web_app/search/?query=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // you can handle search results display here
+                } else {
+                    showToast("No results found.", "info");
+                }
+            });
+    }
+</script>
+{% endblock %}
